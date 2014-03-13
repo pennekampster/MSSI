@@ -7,6 +7,14 @@ library(scales)
 
 #read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
 trajectories_raw <- read.csv("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/JPG_videos/3 - trajectory data/ParticleLinker_Data00040.ijout.txt.txt",sep = ",")
+trajectories_raw$identifier <- paste0("data-",trajectories_raw$traj)
+
+trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
+trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
+trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
+# create unique ID consisting of trajectory ID and file
+traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
+trajectory.data <- cbind(trajectory.data,traj)
 
 # input the dataset
 # 1) dataset containing the trajectories
@@ -18,6 +26,18 @@ calculate_MSSI <- function(data,uniqueID="traj",time="frame",window_size,granulo
 # rename columns in data according to specification
 colnames(data)[colnames(data) == paste(uniqueID)] <- "uniqueID"
 colnames(data)[colnames(data) == paste(time)] <- "time"
+colnames(data)[colnames(data) == "X"] <- "x"
+colnames(data)[colnames(data) == "Y"] <- "y"
+
+data <- data[,c("uniqueID","time","x","y")]
+
+# part to account for character values as identifiers
+original_id <- data$uniqueID
+data$uniqueID <- as.numeric(as.factor(data$uniqueID))
+original_id <- as.data.frame(cbind(original_id,data$uniqueID))
+colnames(original_id) <- c("original_id","uniqueID")
+
+rownames(data) <- NULL
 
 # specify resolution of the trajectory (i.e. granulosity)
 temporal_simplification <- function(df,phi){
@@ -76,8 +96,12 @@ for (j in 1:length(window_size)){
     SI <- merge(gd,nd,by=c("uniqueID","time"))
     SI <- transform(SI, SI = nd/gd)
     SI <- SI[order(SI$uniqueID,SI$time), ]
+    SI$nd <- SI$gd <- NULL
     
+    #SI <- merge(SI,original_id,c("uniqueID"))
+    #SI$uniqueID <- NULL
     # rename columns as in original dataset
+    #colnames(SI)[colnames(SI) == "original_id"] <- paste(uniqueID)
     colnames(SI)[colnames(SI) == "uniqueID"] <- paste(uniqueID)
     colnames(SI)[colnames(SI) == "time"] <- paste(time)
     
@@ -89,15 +113,21 @@ for (j in 1:length(window_size)){
     if (i>=1 & j>1) SI_full <- rbind(SI_full,SI)
     }
 }
+rownames(SI_full) <- NULL
 return(SI_full)
 }
 
 # function call
-MSSI <- calculate_MSSI(trajectories_raw,uniqueID="traj",time="frame",2:100,1:5)
+MSSI <- calculate_MSSI(trajectories_raw,uniqueID="identifier",time="frame",2,1)
+#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:3,1)
 
 # function to plot the trajectory and the corresponding MSSI
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",random=T,N_traj=10,trajectory_select=select_traj){
 
+colnames(raw_traj)[colnames(raw_traj) == paste(uniqueID)] <- "uniqueID"
+colnames(raw_traj)[colnames(raw_traj) == paste(time)] <- "time"
+raw_traj$uniqueID <- as.numeric(as.factor(raw_traj$uniqueID))
+  
 # rename columns in data according to specification
 colnames(data)[colnames(data) == paste(uniqueID)] <- "uniqueID"
 colnames(data)[colnames(data) == paste(time)] <- "time"
@@ -113,8 +143,8 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
                theme(legend.position="bottom")+
                facet_wrap(~granulosity,ncol=4)
 
-  traj_plot <-  subset(raw_traj, get(uniqueID) == select_traj[k])
-                gg_traj <- ggplot(traj_plot, aes(x,y,label=frame))+ 
+  traj_plot <-  subset(raw_traj, uniqueID == select_traj[k])
+                gg_traj <- ggplot(traj_plot, aes(x,y,label=time))+ 
                 geom_text(size=3)
   
   print(grid.arrange(gg_traj,traj_MSSI))
@@ -123,5 +153,4 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 }
 
 # call to plot function
-plot_MSSI(trajectories_raw,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
-
+plot_MSSI(trajectories_raw,MSSI,uniqueID="identifier",time="frame",random=T,N_traj=10)
