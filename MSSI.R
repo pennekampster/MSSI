@@ -6,15 +6,12 @@ library(gridExtra)
 library(scales)
 
 #read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
-trajectories_raw <- read.csv("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/JPG_videos/3 - trajectory data/ParticleLinker_Data00040.ijout.txt.txt",sep = ",")
-trajectories_raw$identifier <- paste0("data-",trajectories_raw$traj)
-
-trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
-trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
-trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
-# create unique ID consisting of trajectory ID and file
-traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
-trajectory.data <- cbind(trajectory.data,traj)
+# trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
+# trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
+# trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
+# # create unique ID consisting of trajectory ID and file
+# traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
+# trajectory.data <- cbind(trajectory.data,traj)
 
 # input the dataset
 # 1) dataset containing the trajectories
@@ -23,6 +20,8 @@ trajectory.data <- cbind(trajectory.data,traj)
 
 calculate_MSSI <- function(data,uniqueID="traj",time="frame",window_size,granulosity){
 
+original_id <- eval(get(uniqueID))
+  
 # rename columns in data according to specification
 colnames(data)[colnames(data) == paste(uniqueID)] <- "uniqueID"
 colnames(data)[colnames(data) == paste(time)] <- "time"
@@ -32,11 +31,12 @@ colnames(data)[colnames(data) == "Y"] <- "y"
 data <- data[,c("uniqueID","time","x","y")]
 
 # part to account for character values as identifiers
-original_id <- data$uniqueID
 data$uniqueID <- as.numeric(as.factor(data$uniqueID))
 original_id <- as.data.frame(cbind(original_id,data$uniqueID))
+original_id <- unique(original_id)
+rownames(original_id) <- NULL
 colnames(original_id) <- c("original_id","uniqueID")
-
+assign("original_id",original_id, envir = .GlobalEnv)
 rownames(data) <- NULL
 
 # specify resolution of the trajectory (i.e. granulosity)
@@ -98,11 +98,12 @@ for (j in 1:length(window_size)){
     SI <- SI[order(SI$uniqueID,SI$time), ]
     SI$nd <- SI$gd <- NULL
     
-    #SI <- merge(SI,original_id,c("uniqueID"))
-    #SI$uniqueID <- NULL
+    SI <- merge(SI,original_id,c("uniqueID"))
+    SI$uniqueID <- NULL
+    
     # rename columns as in original dataset
-    #colnames(SI)[colnames(SI) == "original_id"] <- paste(uniqueID)
-    colnames(SI)[colnames(SI) == "uniqueID"] <- paste(uniqueID)
+    colnames(SI)[colnames(SI) == "original_id"] <- paste(uniqueID)
+    #colnames(SI)[colnames(SI) == "uniqueID"] <- paste(uniqueID)
     colnames(SI)[colnames(SI) == "time"] <- paste(time)
     
     # add information on window size and granulosity to results
@@ -117,20 +118,23 @@ rownames(SI_full) <- NULL
 return(SI_full)
 }
 
-# function call
-MSSI <- calculate_MSSI(trajectories_raw,uniqueID="identifier",time="frame",2,1)
-#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:3,1)
+
+# calculate_MSSI function call
+#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:5,1)
 
 # function to plot the trajectory and the corresponding MSSI
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",random=T,N_traj=10,trajectory_select=select_traj){
 
-colnames(raw_traj)[colnames(raw_traj) == paste(uniqueID)] <- "uniqueID"
-colnames(raw_traj)[colnames(raw_traj) == paste(time)] <- "time"
-raw_traj$uniqueID <- as.numeric(as.factor(raw_traj$uniqueID))
-  
+#rename x and y variable to make function cap-insensitive
+colnames(raw_traj)[tolower(colnames(raw_traj)) == "x"] <- "x"
+colnames(raw_traj)[tolower(colnames(raw_traj)) == "y"] <- "y"
+
 # rename columns in data according to specification
 colnames(data)[colnames(data) == paste(uniqueID)] <- "uniqueID"
 colnames(data)[colnames(data) == paste(time)] <- "time"
+
+colnames(raw_traj)[colnames(raw_traj) == paste(uniqueID)] <- "uniqueID"
+colnames(raw_traj)[colnames(raw_traj) == paste(time)] <- "time"
 
 if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 
@@ -153,4 +157,4 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 }
 
 # call to plot function
-plot_MSSI(trajectories_raw,MSSI,uniqueID="identifier",time="frame",random=T,N_traj=10)
+#plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
