@@ -1,4 +1,5 @@
 # libraries required for the calculation and the plotting of the MSSI
+library(dplyr)
 library(plyr)
 library(zoo)
 library(ggplot2)
@@ -40,25 +41,34 @@ assign("original_id",original_id, envir = .GlobalEnv)
 rownames(data) <- NULL
 
 # specify resolution of the trajectory (i.e. granulosity)
-temporal_simplification <- function(df,phi){
-  df <- subset(df, time == min(time) | time %% phi  == 0  | time == max(time))
-  return(df)
-}
+ temporal_simplification <- function(df,phi){
+   df <- subset(df, time == min(time) | time %% phi  == 0  | time == max(time))
+   return(df)
+ }
 
 for (i in 1:length(granulosity)){
 
-  # simplify trajectories according to granulosity
-  trajectories <- ddply(data, .(uniqueID),function(x){temporal_simplification(x,granulosity[i])})
+# simplify trajectories according to granulosity
+#trajectories <- ddply(data, .(uniqueID), mutate, function(x){temporal_simplification(x,granulosity[i])})
+trajectories <- ddply(data, .(uniqueID), transform, function(x){temporal_simplification(x, granulosity[i])})
+# trajectories <- data %.%
+#                  group_by(uniqueID) %.%
+#                  filter(time == min(time) | time %% granulosity[i]  == 0  | time == max(time))
 
 for (j in 1:length(window_size)){
 
     #make sure that all trajectories have at least as many fixes as window size 
     length <- ddply(trajectories, .(uniqueID), transform, N = length(x))
+        
+#     length <- trajectories %.%
+#     group_by(uniqueID) %.%
+#     mutate(N = length(x))
+#   
     trajectories <- trajectories[length$N > window_size[j], ]
-    
+
     # specify rolling diff function to calculate the displacement between subsequent x or y coordinates
     roll_diff <- function(x) rollapply(x, 2, function(x) diff(x), by.column=F, fill = NA, align = "center")
-    
+   
     # run rolling diff function per trajectory
     diff_x <- ave(trajectories$x, trajectories[c("uniqueID")], FUN = roll_diff)
     diff_y <- ave(trajectories$y, trajectories[c("uniqueID")], FUN = roll_diff)
