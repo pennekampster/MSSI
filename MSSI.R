@@ -1,6 +1,6 @@
 # libraries required for the calculation and the plotting of the MSSI
 library(dplyr)
-library(plyr)
+#library(plyr)
 library(zoo)
 library(ggplot2)
 library(gridExtra)
@@ -49,9 +49,9 @@ rownames(data) <- NULL
 for (i in 1:length(granulosity)){
 
 # simplify trajectories according to granulosity
-#trajectories <- ddply(data, .(uniqueID), mutate, function(x){temporal_simplification(x,granulosity[i])})
-trajectories <- ddply(data, .(uniqueID), transform, function(x){temporal_simplification(x, granulosity[i])})
-# trajectories <- data %.%
+trajectories <- ddply(data, .(uniqueID), mutate, function(x){temporal_simplification(x,granulosity[i])})
+#trajectories <- ddply(data, .(uniqueID), transform, function(x){temporal_simplification(x, granulosity[i])})
+#trajectories <- data %.%
 #                  group_by(uniqueID) %.%
 #                  filter(time == min(time) | time %% granulosity[i]  == 0  | time == max(time))
 
@@ -70,9 +70,17 @@ for (j in 1:length(window_size)){
     roll_diff <- function(x) rollapply(x, 2, function(x) diff(x), by.column=F, fill = NA, align = "center")
    
     # run rolling diff function per trajectory
-    diff_x <- ave(trajectories$x, trajectories[c("uniqueID")], FUN = roll_diff)
-    diff_y <- ave(trajectories$y, trajectories[c("uniqueID")], FUN = roll_diff)
-    
+     diff_x <- ave(trajectories$x, trajectories[c("uniqueID")], FUN = roll_diff)
+     diff_y <- ave(trajectories$y, trajectories[c("uniqueID")], FUN = roll_diff)
+   
+#      diff_x <- trajectories %.%
+#                group_by("uniqueID") %.%
+#                summarise(diff_x = roll_diff(x))
+#  
+#      diff_y <- trajectories %.%
+#                group_by("uniqueID") %.%
+#                summarise(diff_y = roll_diff(x))
+
     # merge output with id and time
     id <- as.data.frame(cbind(trajectories$uniqueID,trajectories$time, row.names=NULL))
     names(id) <- c("uniqueID","time")
@@ -84,6 +92,13 @@ for (j in 1:length(window_size)){
     # use rollapply to sum displacement into gross displacement for each trajectory
     gd_extract <- function(x) rollapply(x, window_size[j], sum, fill=NA, by.column=F, align = "center")
     gd <- ave(disp$disp, disp[c("uniqueID")], FUN = gd_extract)
+  
+ #    gd <- disp %.%
+#         group_by(uniqueID) %.%
+ #          mutate(gd_extract(disp))
+
+
+
     #merge back with id and time
     gd <- as.data.frame(cbind(gd,id))
     
@@ -93,7 +108,15 @@ for (j in 1:length(window_size)){
     # apply rolling diff function for x and y-coordinates
     x_net <- ave(trajectories$x, trajectories[c("uniqueID")], FUN = roll_diff_window)
     y_net <- ave(trajectories$y, trajectories[c("uniqueID")], FUN = roll_diff_window)
-    
+
+#     x_net <- trajectories %.%
+#               group_by("uniqueID") %.%
+#               summarise(x_net = roll_diff_window(x))
+# 
+#     y_net <- trajectories %.%
+#               group_by("uniqueID") %.%
+#               summarise(y_net = roll_diff_window(y))
+
     # calculate net displacement
     nd <- sqrt(x_net+y_net)
     #merge with id
