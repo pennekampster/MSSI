@@ -1,6 +1,5 @@
 # libraries required for the calculation and the plotting of the MSSI
-#library(dplyr)
-library(plyr)
+library(dplyr)
 library(zoo)
 library(ggplot2)
 library(gridExtra)
@@ -37,7 +36,6 @@ original_id <- as.data.frame(cbind(original_id,data$uniqueID))
 original_id <- unique(original_id)
 rownames(original_id) <- NULL
 colnames(original_id) <- c("original_id","uniqueID")
-assign("original_id",original_id, envir = .GlobalEnv)
 rownames(data) <- NULL
 
 for (i in 1:length(granulosity)){
@@ -66,7 +64,7 @@ for (j in 1:length(window_size)){
     roll_diff <- function(x) rollapply(x, 2, function(x) diff(x), by.column=F, fill = NA, align = "center")
  
     # run rolling diff function per trajectory
-   disp <- as.data.frame(trajectories %.%
+    disp <- as.data.frame(trajectories %.%
                          group_by("uniqueID") %.%
                          transform(diff_x = roll_diff(x), diff_y=roll_diff(y)))
   
@@ -126,7 +124,7 @@ return(SI_full)
 
 
 # calculate_MSSI function call
-system.time(MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:5,1:5))
+#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",seq(2,100,2),1)
 
 # function to plot the trajectory and the corresponding MSSI
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",random=T,N_traj=10,trajectory_select=select_traj){
@@ -148,7 +146,7 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
   traj <-  subset(data, uniqueID == select_traj[k])
 
   traj_MSSI <- ggplot(traj, aes(time, window_size)) +
-               geom_tile(data=traj, aes(width=as.numeric(granulosity),height=as.numeric(5),fill = SI)) + 
+               geom_tile(data=traj, aes(width=as.numeric(granulosity),height=as.numeric(2),fill = SI)) + 
                scale_fill_gradientn(colours = c("red","cyan","black"), guide = "colourbar", limits=c(0,1))+
                theme(legend.position="bottom")+
                facet_wrap(~granulosity,ncol=4)
@@ -163,5 +161,5 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 }
 
 # call to plot function
-plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
+#plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
 
