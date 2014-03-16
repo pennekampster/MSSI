@@ -1,18 +1,18 @@
 # libraries required for the calculation and the plotting of the MSSI
-library(dplyr)
-#library(plyr)
+#library(dplyr)
+library(plyr)
 library(zoo)
 library(ggplot2)
 library(gridExtra)
 library(scales)
 
 #read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
-# trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
-# trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
-# trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
-# # create unique ID consisting of trajectory ID and file
-# traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
-# trajectory.data <- cbind(trajectory.data,traj)
+trajectory.data.full <- read.table("C:/Users/Frank/Documents/PhD/Programming/franco/data/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
+trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data34", ]
+trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
+# create unique ID consisting of trajectory ID and file
+traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
+trajectory.data <- cbind(trajectory.data,traj)
 
 # input the dataset
 # 1) dataset containing the trajectories
@@ -40,88 +40,61 @@ colnames(original_id) <- c("original_id","uniqueID")
 assign("original_id",original_id, envir = .GlobalEnv)
 rownames(data) <- NULL
 
-# specify resolution of the trajectory (i.e. granulosity)
- temporal_simplification <- function(df,phi){
-   df <- subset(df, time == min(time) | time %% phi  == 0  | time == max(time))
-   return(df)
- }
-
 for (i in 1:length(granulosity)){
 
 # simplify trajectories according to granulosity
-trajectories <- ddply(data, .(uniqueID), mutate, function(x){temporal_simplification(x,granulosity[i])})
-#trajectories <- ddply(data, .(uniqueID), transform, function(x){temporal_simplification(x, granulosity[i])})
-#trajectories <- data %.%
-#                  group_by(uniqueID) %.%
-#                  filter(time == min(time) | time %% granulosity[i]  == 0  | time == max(time))
+trajectories <- as.data.frame(data %.%
+                group_by(uniqueID) %.%
+                filter(time == min(time) | time %% granulosity[i]  == 0  | time == max(time))%.%
+                arrange(uniqueID,time))
 
 for (j in 1:length(window_size)){
-
-    #make sure that all trajectories have at least as many fixes as window size 
-    length <- ddply(trajectories, .(uniqueID), transform, N = length(x))
-        
-#     length <- trajectories %.%
-#     group_by(uniqueID) %.%
-#     mutate(N = length(x))
+  
+# if(granulosity[j] > window_size[i]) {
+#     next
+#   } else {
 #   
+  
+    #make sure that all trajectories have at least as many fixes as window size 
+    length <- as.data.frame(trajectories %.%
+              group_by(uniqueID) %.%
+              mutate(N = length(x)))
+   
     trajectories <- trajectories[length$N > window_size[j], ]
 
     # specify rolling diff function to calculate the displacement between subsequent x or y coordinates
     roll_diff <- function(x) rollapply(x, 2, function(x) diff(x), by.column=F, fill = NA, align = "center")
-   
+ 
     # run rolling diff function per trajectory
-     diff_x <- ave(trajectories$x, trajectories[c("uniqueID")], FUN = roll_diff)
-     diff_y <- ave(trajectories$y, trajectories[c("uniqueID")], FUN = roll_diff)
-   
-#      diff_x <- trajectories %.%
-#                group_by("uniqueID") %.%
-#                summarise(diff_x = roll_diff(x))
-#  
-#      diff_y <- trajectories %.%
-#                group_by("uniqueID") %.%
-#                summarise(diff_y = roll_diff(x))
-
-    # merge output with id and time
-    id <- as.data.frame(cbind(trajectories$uniqueID,trajectories$time, row.names=NULL))
-    names(id) <- c("uniqueID","time")
-    disp <- as.data.frame(cbind(id,diff_x,diff_y))
-    
+   disp <- as.data.frame(trajectories %.%
+                         group_by("uniqueID") %.%
+                         transform(diff_x = roll_diff(x), diff_y=roll_diff(y)))
+  
     # calculate displacement based on diffs in x and y for subsequent fixes
     disp$disp <- sqrt(disp$diff_x^2+disp$diff_y^2)
+    disp <- disp[, c(1,2,7)] 
     
     # use rollapply to sum displacement into gross displacement for each trajectory
     gd_extract <- function(x) rollapply(x, window_size[j], sum, fill=NA, by.column=F, align = "center")
-    gd <- ave(disp$disp, disp[c("uniqueID")], FUN = gd_extract)
-  
- #    gd <- disp %.%
-#         group_by(uniqueID) %.%
- #          mutate(gd_extract(disp))
 
+    gd <- as.data.frame(disp %.%
+          group_by(uniqueID) %.%
+          mutate(gd = gd_extract(disp)))
 
+    gd$disp <- NULL
 
-    #merge back with id and time
-    gd <- as.data.frame(cbind(gd,id))
-    
     # specify rolling diff function between first and last observation (to calculate net displacement)
     roll_diff_window <- function(x) rollapply(x, width=window_size[j]+1, function(x) diff(x,(window_size[j]))^2, fill = NA, align="center", by.column=FALSE)
     
-    # apply rolling diff function for x and y-coordinates
-    x_net <- ave(trajectories$x, trajectories[c("uniqueID")], FUN = roll_diff_window)
-    y_net <- ave(trajectories$y, trajectories[c("uniqueID")], FUN = roll_diff_window)
-
-#     x_net <- trajectories %.%
-#               group_by("uniqueID") %.%
-#               summarise(x_net = roll_diff_window(x))
-# 
-#     y_net <- trajectories %.%
-#               group_by("uniqueID") %.%
-#               summarise(y_net = roll_diff_window(y))
+    nd <- as.data.frame(trajectories %.%
+          group_by("uniqueID") %.%
+          transform(x_net = roll_diff_window(x),
+                    y_net = roll_diff_window(y)))
 
     # calculate net displacement
-    nd <- sqrt(x_net+y_net)
-    #merge with id
-    nd <- as.data.frame(cbind(nd,id))
-    
+    nd$nd <- sqrt(nd$x_net+nd$y_net)
+    nd <- nd[, c(1,2,7)] 
+
     # shift necessary for correct association of net to gross displacement (because gd is shifted)
     if (window_size[j] %% 2 == 0) nd$time <- nd$time-granulosity[i]
     
@@ -143,8 +116,8 @@ for (j in 1:length(window_size)){
     SI$granulosity <- granulosity[i]
     SI$window_size <- window_size[j]
 
-    if (i==1 & j == 1) SI_full <- SI
-    if (i>=1 & j>1) SI_full <- rbind(SI_full,SI)
+    if (i==1 & j == 1) SI_full <- SI else SI_full <- rbind(SI_full,SI)
+
     }
 }
 rownames(SI_full) <- NULL
@@ -153,7 +126,7 @@ return(SI_full)
 
 
 # calculate_MSSI function call
-#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:5,1)
+system.time(MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:5,1:5))
 
 # function to plot the trajectory and the corresponding MSSI
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",random=T,N_traj=10,trajectory_select=select_traj){
@@ -175,7 +148,7 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
   traj <-  subset(data, uniqueID == select_traj[k])
 
   traj_MSSI <- ggplot(traj, aes(time, window_size)) +
-               geom_tile(data=traj, aes(width=as.numeric(granulosity),height=1,fill = SI)) + 
+               geom_tile(data=traj, aes(width=as.numeric(granulosity),height=as.numeric(5),fill = SI)) + 
                scale_fill_gradientn(colours = c("red","cyan","black"), guide = "colourbar", limits=c(0,1))+
                theme(legend.position="bottom")+
                facet_wrap(~granulosity,ncol=4)
@@ -190,4 +163,5 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 }
 
 # call to plot function
-#plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
+plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
+
