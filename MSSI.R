@@ -4,14 +4,15 @@ library(zoo)
 library(ggplot2)
 library(gridExtra)
 library(scales)
+library(tcltk)
 
-#read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
-trajectory.data.full <- read.table("C:/Users/Frank/Documents/PhD/Programming/franco/data/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
-trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data34", ]
-trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
-# create unique ID consisting of trajectory ID and file
-traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
-trajectory.data <- cbind(trajectory.data,traj)
+# #read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
+# trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
+# trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
+# trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
+# #create unique ID consisting of trajectory ID and file
+# traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
+# trajectory.data <- cbind(trajectory.data,traj)
 
 # input the dataset
 # 1) dataset containing the trajectories
@@ -38,6 +39,9 @@ rownames(original_id) <- NULL
 colnames(original_id) <- c("original_id","uniqueID")
 rownames(data) <- NULL
 
+# create progress bar
+pb <- tkProgressBar(title = "progress bar", min = 0, max = length(window_size), width = 300)
+
 for (i in 1:length(granulosity)){
 
 # simplify trajectories according to granulosity
@@ -52,6 +56,9 @@ for (j in 1:length(window_size)){
 #     next
 #   } else {
 #   
+  
+     Sys.sleep(0.1)
+     setTkProgressBar(pb, j, label=paste(round(j/length(window_size)*100, 0), "% done"))
   
     #make sure that all trajectories have at least as many fixes as window size 
     length <- as.data.frame(trajectories %.%
@@ -120,11 +127,12 @@ for (j in 1:length(window_size)){
 }
 rownames(SI_full) <- NULL
 return(SI_full)
+close(pb)
 }
 
 
 # calculate_MSSI function call
-#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",seq(2,100,2),1)
+#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",5:10,1)
 
 # function to plot the trajectory and the corresponding MSSI
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",random=T,N_traj=10,trajectory_select=select_traj){
@@ -162,4 +170,9 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 
 # call to plot function
 #plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
+
+
+
+
+
 
