@@ -1,0 +1,17 @@
+Package: MSSI
+Title: The multiscale straightness index for the analysis of animal trajectories
+Version: 0.1
+Author: Frank Pennekamp <Frank.Pennekamp@posteo.de>
+Maintainer: Frank Pennekamp <Frank.Pennekamp@posteo.de>
+Description: This R package contains two functions to calculate the MSSI for a
+    given trajectory and then plot the measure and the associated trajectory.
+Depends:
+    R (>= 3.0.2)
+License: MIT
+LazyData: true
+Imports:
+    zoo,
+    ggplot2,
+    dplyr,
+    tcltk,
+    gridExtra
