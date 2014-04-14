@@ -3,21 +3,29 @@ library(dplyr)
 library(zoo)
 library(ggplot2)
 library(gridExtra)
-library(scales)
+#library(scales)
 library(tcltk)
 
-# #read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
-# trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
-# trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
-# trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
-# #create unique ID consisting of trajectory ID and file
-# traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
-# trajectory.data <- cbind(trajectory.data,traj)
+#read raw trajectory data, containing unique ID for each trajectory, X- and Y-coordinates and the frame
+trajectory.data.full <- read.table("/Users/Frank/Documents/Postdoc/Franco_validation/Sampling_exp/PNG_videos/5 - merged data/MasterData.csv",header=T,row.names=NULL,sep=",",stringsAsFactor=F)
+trajectory.data <- trajectory.data.full[trajectory.data.full$file == "data00001", ]
+trajectory.data <- trajectory.data[order(trajectory.data$file,trajectory.data$trajectory,trajectory.data$frame), ]
+#create unique ID consisting of trajectory ID and file
+traj <- paste(trajectory.data$file,trajectory.data$trajectory,sep="-")
+trajectory.data <- cbind(trajectory.data,traj)
 
-# input the dataset
-# 1) dataset containing the trajectories
-# 2) specify the "unique identifier" column and the "time" column
-# 3) specify the window sizes and the temporal resolution (i.e. granulosity) for which you want to calculate the SI
+#' Function to calculate the Multiscale Straightness Index
+#' 
+#' Takes a dataframe with the X and Y coordinates of a trajectory and calculates the MSSI for different window sizes and 
+#' granulosities
+#' @param data A dataframe containing the X and Y coordinates
+#' @param uniqueID The unique identifier for each trajectory in the dataframe
+#' @param time The column containing the information on the time for each fix
+#' @param window_size A numeric value or vector specifying the window sizes over which the MSSI should be calculated
+#' @param granulosity A numeric value or vector specifying the temporal resolution of the data before the MSSI is calculated
+#' @return A dataframe containing the MSSI for each fix in addition to the input data
+#' @import dplyr zoo tcltk
+#' @export
 
 calculate_MSSI <- function(data,uniqueID="traj",time="frame",window_size,granulosity){
 
@@ -52,13 +60,8 @@ trajectories <- as.data.frame(data %.%
 
 for (j in 1:length(window_size)){
   
-# if(granulosity[j] > window_size[i]) {
-#     next
-#   } else {
-#   
-  
-     Sys.sleep(0.1)
-     setTkProgressBar(pb, j, label=paste(round(j/length(window_size)*100, 0), "% done"))
+   Sys.sleep(0.1)
+   setTkProgressBar(pb, j, label=paste(round(j/length(window_size)*100, 0), "% done of run ",i))
   
     #make sure that all trajectories have at least as many fixes as window size 
     length <- as.data.frame(trajectories %.%
@@ -67,6 +70,10 @@ for (j in 1:length(window_size)){
    
     trajectories <- trajectories[length$N > window_size[j], ]
 
+    if(nrow(trajectories)==0){ next
+    
+    } else {
+    
     # specify rolling diff function to calculate the displacement between subsequent x or y coordinates
     roll_diff <- function(x) rollapply(x, 2, function(x) diff(x), by.column=F, fill = NA, align = "center")
  
@@ -114,7 +121,6 @@ for (j in 1:length(window_size)){
     
     # rename columns as in original dataset
     colnames(SI)[colnames(SI) == "original_id"] <- paste(uniqueID)
-    #colnames(SI)[colnames(SI) == "uniqueID"] <- paste(uniqueID)
     colnames(SI)[colnames(SI) == "time"] <- paste(time)
     
     # add information on window size and granulosity to results
@@ -122,19 +128,32 @@ for (j in 1:length(window_size)){
     SI$window_size <- window_size[j]
 
     if (i==1 & j == 1) SI_full <- SI else SI_full <- rbind(SI_full,SI)
-
+        }
     }
 }
+close(pb)
 rownames(SI_full) <- NULL
 return(SI_full)
-close(pb)
 }
 
-
 # calculate_MSSI function call
-#MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",5:10,1)
+MSSI <- calculate_MSSI(trajectory.data,uniqueID="traj",time="frame",2:3,1)
 
-# function to plot the trajectory and the corresponding MSSI
+#' Function to visualize the MSSI along a trajectory 
+#' 
+#' Takes the dataframe returned by the calculate_MSSI function and the raw trajectory data to construct the plot
+#' @param raw_traj A dataframe containing the X and Y coordinates of the trajectories on which the MSSI was calculated
+#' @param data The dataframe returned by the calculate MSSI_function containing the MSSI index for each fix and different window sizes 
+#' and granulosities
+#' @param uniqueID Column name of the unique identifier for each trajectory in the dataframe
+#' @param time Column name containing the information on the time for each fix
+#' @param random Logical; whether the trajectories to be plotted are randomly sampled from the data 
+#' @param N_traj A numeric value specifying the number of trajectories to be plotted
+#' @return A plot showing the MSSI for each fix for different window sizes
+#' @param trajectory_select Vector containing the unique IDs of the trajectories to be plotted'
+#' @import ggplot2 gridExtra 
+#' @export
+
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",random=T,N_traj=10,trajectory_select=select_traj){
 
 #rename x and y variable to make function cap-insensitive
@@ -169,7 +188,7 @@ if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
 }
 
 # call to plot function
-#plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
+plot_MSSI(trajectory.data,MSSI,uniqueID="traj",time="frame",random=T,N_traj=10)
 
 
 
