@@ -45,7 +45,7 @@ trajectories <- as.data.frame(data %.%
 for (j in 1:length(window_size)){
   
    Sys.sleep(0.1)
-   setTkProgressBar(pb, j, label=paste(round(j/length(window_size)*100, 0), "% done of run ",i))
+   setTkProgressBar(pb, j, label=paste(round(j/length(window_size)*100, 0), "% done of run ",i, "(out of",length(granulosity),")"))
   
     #make sure that all trajectories have at least as many fixes as window size 
     length <- as.data.frame(trajectories %.%
@@ -54,7 +54,7 @@ for (j in 1:length(window_size)){
    
     trajectories <- trajectories[length$N > window_size[j], ]
 
-    if(nrow(trajectories)==0){ next
+    if(nrow(trajectories)==0){ break
     
     } else {
     
