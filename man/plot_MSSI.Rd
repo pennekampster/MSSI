@@ -2,8 +2,9 @@
 \alias{plot_MSSI}
 \title{Function to visualize the MSSI along a trajectory}
 \usage{
-plot_MSSI(raw_traj, data, uniqueID = "traj", time = "frame", random = T,
-  N_traj = 10, trajectory_select = select_traj)
+plot_MSSI(raw_traj, data, uniqueID = "traj", time = "frame",
+  granulosity_choosen = 1, random = T, N_traj = 10,
+  trajectory_select = select_traj)
 }
 \arguments{
   \item{raw_traj}{A dataframe containing the X and Y
@@ -20,6 +21,10 @@ plot_MSSI(raw_traj, data, uniqueID = "traj", time = "frame", random = T,
   \item{time}{Column name containing the information on the
   time for each fix}
 
+  \item{granulosity_choosen}{A numeric value of granulosity
+  for plotting corresponding to the granulosity values
+  choosen}
+
   \item{random}{Logical; whether the trajectories to be
   plotted are randomly sampled from the data}
 
@@ -27,7 +32,7 @@ plot_MSSI(raw_traj, data, uniqueID = "traj", time = "frame", random = T,
   trajectories to be plotted}
 
   \item{trajectory_select}{Vector containing the unique IDs
-  of the trajectories to be plotted'}
+  of the trajectories to be plotted}
 }
 \value{
 A plot showing the MSSI for each fix for different window
