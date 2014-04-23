@@ -11,8 +11,6 @@
 #' @param N_traj A numeric value specifying the number of trajectories to be plotted
 #' @return A plot showing the MSSI for each fix for different window sizes
 #' @param trajectory_select Vector containing the unique IDs of the trajectories to be plotted
-#' @import ggplot2 
-#' @import gridExtra
 #' @export
 
 plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",granulosity_choosen=1,random=T,N_traj=10,trajectory_select=select_traj){

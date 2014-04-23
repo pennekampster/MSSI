@@ -1,7 +1,5 @@
 export(calculate_MSSI)
 export(plot_MSSI)
 import(dplyr)
-import(ggplot2)
-import(gridExtra)
 import(tcltk)
 import(zoo)
