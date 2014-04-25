@@ -13,8 +13,11 @@
 
 calculate_MSSI <- function(data,uniqueID="traj",time="frame",window_size,granulosity){
 
-original_id <- eval(get(uniqueID))
-  
+original_id <- eval(parse(text=paste0("data$",uniqueID)))
+
+# sort columns
+data <- data[,c(paste0(uniqueID),paste0(time),"X","Y")]
+
 # rename columns in data according to specification
 colnames(data)[colnames(data) == paste(uniqueID)] <- "uniqueID"
 colnames(data)[colnames(data) == paste(time)] <- "time"
