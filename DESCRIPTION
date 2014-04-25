@@ -15,3 +15,6 @@ Imports:
     dplyr,
     tcltk,
     gridExtra
+VignetteBuilder: knitr
+Suggests:
+    knitr
