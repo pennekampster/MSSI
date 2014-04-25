@@ -1,3 +1,7 @@
+\VignetteEngine{knitr::knitr}
+\VignetteIndexEntry{Franco vignette}
+
+
 \documentclass{article}
 
 \usepackage[vmargin=1in,hmargin=1in]{geometry}
@@ -7,9 +11,9 @@
 \section{Load MSSI package from github}
 
 The MSSI package is available from github and can be installed using devtools package:
-<<install, eval=T>>=
+<<install, eval=F>>=
 library(devtools)
-install_github("MSSI" ,"pennekampster", ref = "package")
+install_github("MSSI" ,"pennekampster")
 @
 
 <<load>>=
