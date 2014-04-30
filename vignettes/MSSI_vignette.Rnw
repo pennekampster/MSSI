@@ -1,6 +1,5 @@
-\VignetteEngine{knitr::knitr}
-\VignetteIndexEntry{Franco vignette}
-
+%\VignetteEngine{knitr::knitr} 
+%\VignetteIndexEntry{Use the MSSI package}
 
 \documentclass{article}
 
@@ -31,7 +30,7 @@ str(example_data)
 Use the calculate\_MSSI function to calculate the MSSI across a range of window sizes and granulosity values.
 
 <<calculate>>=
-MSSI <- calculate_MSSI(example_data,uniqueID="traj",time="frame",seq(2,10,by=2),1)
+MSSI <- calculate_MSSI(example_data,uniqueID="traj",time="frame",seq(2,20,by=2),1)
 @
 
 Plot the resulting MSSI and the trajectory.
@@ -40,6 +39,5 @@ Plot the resulting MSSI and the trajectory.
 library(ggplot2)
 plot_MSSI(example_data,MSSI,uniqueID="traj",time="frame",granulosity_choosen=1,random=T,N_traj=5)
 @
-
 
 \end{document}
