@@ -7,17 +7,29 @@
 
 \begin{document}
 
+\section{Introduction}
+
+This R package implements two functions to calculate and then plot the MSSI measure for animal trajectory analysis proposed by C.M. Postlethwaite, P. Brown, und T.E. Dennis: „A New Multi-Scale Measure for Analysing Animal Movement Data“. Journal of Theoretical Biology 317 (2013): 175–185. doi:10.1016/j.jtbi.2012.10.007.
+
 \section{Load MSSI package from github}
 
 The MSSI package is available from github and can be installed using devtools package:
-<<install, eval=F>>=
+<<install_github, eval=F>>=
 library(devtools)
 install_github("MSSI" ,"pennekampster")
 @
 
+Alternatively, use the source code of the package and install from a local path:
+<<install_locally, eval=F>>=
+install.packages("C:/Users/Frank/Desktop/MSSI_0.1.tar.gz", repos=NULL, type="source")
+@
+
+After installing, you have to load the library:
 <<load>>=
 library(MSSI)
 @
+
+Done, let's try out the package with the example data provided in the package!
 
 \section{Example data}
 
@@ -27,17 +39,17 @@ data(example_data)
 str(example_data)
 @
 
-Use the calculate\_MSSI function to calculate the MSSI across a range of window sizes and granulosity values.
-
+Use the calculate\_MSSI function to calculate the MSSI across a range of window sizes and granulosity values. In this example, we calculate the straightness index for all window sizes between 2 and 500, but only at the original resolution of the data (granulosity=1).
 <<calculate>>=
-MSSI <- calculate_MSSI(example_data,uniqueID="traj",time="frame",seq(2,20,by=2),1)
+MSSI <- calculate_MSSI(example_data,uniqueID="traj",time="frame",seq(2,500,by=1),1)
 @
 
-Plot the resulting MSSI and the trajectory.
-
+After calculating the MSSI, we can plot the index and the trajectory simultaneously.
 <<plot,echo=F>>=
 library(ggplot2)
 plot_MSSI(example_data,MSSI,uniqueID="traj",time="frame",granulosity_choosen=1,random=T,N_traj=5)
 @
+
+That's it. Try out the package now with your own movement trajectories and see what it can reveal about how animals move through their environment and at which scales, movement linearity tends to change.
 
 \end{document}
