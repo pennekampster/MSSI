@@ -1,8 +1,7 @@
 #' Function to calculate the Multiscale Straightness Index
 #' 
 #' Takes a dataframe with the X and Y coordinates of a trajectory and calculates the MSSI for different window sizes and 
-#' granulosities. The algorithm is described in C.M. Postlethwaite, P. Brown, und T.E. Dennis: A New Multi-Scale Measure for Analysing Animal Movement Data. 
-#' Journal of Theoretical Biology 317 (2013): 175–185. doi:10.1016/j.jtbi.2012.10.007. 
+#' granulosities. 
 #' @param data A dataframe containing the X and Y coordinates
 #' @param uniqueID The unique identifier for each trajectory in the dataframe
 #' @param time The column containing the information on the time for each fix
@@ -11,6 +10,8 @@
 #' @return A dataframe containing the MSSI for each fix in addition to the input data
 #' @import dplyr zoo tcltk
 #' @export
+#' @references C.M. Postlethwaite, P. Brown, und T.E. Dennis: A New Multi-Scale Measure for Analysing Animal Movement Data. 
+#' Journal of Theoretical Biology 317 (2013): 175-185. doi:10.1016/j.jtbi.2012.10.007. 
 
 calculate_MSSI <- function(data,uniqueID="traj",time="frame",window_size,granulosity){
 
