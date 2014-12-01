@@ -94,7 +94,7 @@ for (j in 1:length(window_size)){
 
     # calculate net displacement
     nd$nd <- sqrt(nd$x_net+nd$y_net)
-    nd <- nd[, c(1,2,7)] 
+    nd <- nd[, c(1,2,8)] 
 
     # shift necessary for correct association of net to gross displacement (because gd is shifted)
     if (window_size[j] %% 2 == 0) nd$time <- nd$time-granulosity[i]
