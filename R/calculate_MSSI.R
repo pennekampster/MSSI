@@ -73,7 +73,7 @@ for (j in 1:length(window_size)){
   
     # calculate displacement based on diffs in x and y for subsequent fixes
     disp$disp <- sqrt(disp$diff_x^2+disp$diff_y^2)
-    disp <- disp[, c(1,2,7)] 
+    disp <- disp[, c(1,2,8)] 
     
     # use rollapply to sum displacement into gross displacement for each trajectory
     gd_extract <- function(x) rollapply(x, window_size[j], sum, fill=NA, by.column=F, align = "center")
@@ -82,7 +82,7 @@ for (j in 1:length(window_size)){
           group_by(uniqueID) %>%
           mutate(gd = gd_extract(disp)))
 
-    gd$diff_y <- NULL
+    gd$disp <- NULL
 
     # specify rolling diff function between first and last observation (to calculate net displacement)
     roll_diff_window <- function(x) rollapply(x, width=window_size[j]+1, function(x) diff(x,(window_size[j]))^2, fill = NA, align="center", by.column=FALSE)
