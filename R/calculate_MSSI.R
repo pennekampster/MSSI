@@ -82,7 +82,7 @@ for (j in 1:length(window_size)){
           group_by(uniqueID) %>%
           mutate(gd = gd_extract(disp)))
 
-    gd$disp <- NULL
+    gd$diff_y <- NULL
 
     # specify rolling diff function between first and last observation (to calculate net displacement)
     roll_diff_window <- function(x) rollapply(x, width=window_size[j]+1, function(x) diff(x,(window_size[j]))^2, fill = NA, align="center", by.column=FALSE)
