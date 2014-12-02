@@ -42,9 +42,9 @@ pb <- tkProgressBar(title = "progress bar", min = 0, max = length(window_size), 
 for (i in 1:length(granulosity)){
 
 # simplify trajectories according to granulosity
-trajectories <- as.data.frame(data %.%
-                group_by(uniqueID) %.%
-                filter(time == min(time) | time %% granulosity[i]  == 0  | time == max(time))%.%
+trajectories <- as.data.frame(data %>%
+                group_by(uniqueID) %>%
+                filter(time == min(time) | time %% granulosity[i]  == 0  | time == max(time))%>%
                 arrange(uniqueID,time))
 
 for (j in 1:length(window_size)){
@@ -53,8 +53,8 @@ for (j in 1:length(window_size)){
    setTkProgressBar(pb, j, label=paste(round(j/length(window_size)*100, 0), "% done of run ",i, "(out of",length(granulosity),")"))
   
     #make sure that all trajectories have at least as many fixes as window size 
-    length <- as.data.frame(trajectories %.%
-              group_by(uniqueID) %.%
+    length <- as.data.frame(trajectories %>%
+              group_by(uniqueID) %>%
               mutate(N = length(x)))
    
     trajectories <- trajectories[length$N > window_size[j], ]
@@ -67,19 +67,19 @@ for (j in 1:length(window_size)){
     roll_diff <- function(x) rollapply(x, 2, function(x) diff(x), by.column=F, fill = NA, align = "center")
  
     # run rolling diff function per trajectory
-    disp <- as.data.frame(trajectories %.%
-                         group_by("uniqueID") %.%
+    disp <- as.data.frame(trajectories %>%
+                         group_by("uniqueID") %>%
                          transform(diff_x = roll_diff(x), diff_y=roll_diff(y)))
   
     # calculate displacement based on diffs in x and y for subsequent fixes
     disp$disp <- sqrt(disp$diff_x^2+disp$diff_y^2)
-    disp <- disp[, c(1,2,7)] 
+    disp <- disp[, c(1,2,8)] 
     
     # use rollapply to sum displacement into gross displacement for each trajectory
     gd_extract <- function(x) rollapply(x, window_size[j], sum, fill=NA, by.column=F, align = "center")
 
-    gd <- as.data.frame(disp %.%
-          group_by(uniqueID) %.%
+    gd <- as.data.frame(disp %>%
+          group_by(uniqueID) %>%
           mutate(gd = gd_extract(disp)))
 
     gd$disp <- NULL
@@ -87,14 +87,14 @@ for (j in 1:length(window_size)){
     # specify rolling diff function between first and last observation (to calculate net displacement)
     roll_diff_window <- function(x) rollapply(x, width=window_size[j]+1, function(x) diff(x,(window_size[j]))^2, fill = NA, align="center", by.column=FALSE)
     
-    nd <- as.data.frame(trajectories %.%
-          group_by("uniqueID") %.%
+    nd <- as.data.frame(trajectories %>%
+          group_by("uniqueID") %>%
           transform(x_net = roll_diff_window(x),
                     y_net = roll_diff_window(y)))
 
     # calculate net displacement
     nd$nd <- sqrt(nd$x_net+nd$y_net)
-    nd <- nd[, c(1,2,7)] 
+    nd <- nd[, c(1,2,8)] 
 
     # shift necessary for correct association of net to gross displacement (because gd is shifted)
     if (window_size[j] %% 2 == 0) nd$time <- nd$time-granulosity[i]
