@@ -30,6 +30,12 @@ the input data
 \description{
 Takes a dataframe with the X and Y coordinates of a
 trajectory and calculates the MSSI for different window
-sizes and granulosities
+sizes and granulosities.
+}
+\references{
+C.M. Postlethwaite, P. Brown, und T.E. Dennis: A New
+Multi-Scale Measure for Analysing Animal Movement Data.
+Journal of Theoretical Biology 317 (2013): 175-185.
+doi:10.1016/j.jtbi.2012.10.007.
 }
 
