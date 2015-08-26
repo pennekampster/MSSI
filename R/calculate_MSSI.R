@@ -73,7 +73,7 @@ for (j in 1:length(window_size)){
   
     # calculate displacement based on diffs in x and y for subsequent fixes
     disp$disp <- sqrt(disp$diff_x^2+disp$diff_y^2)
-    disp <- disp[, c(1,2,8)] 
+    disp <- disp[, c("uniqueID","time","disp")] 
     
     # use rollapply to sum displacement into gross displacement for each trajectory
     gd_extract <- function(x) rollapply(x, window_size[j], sum, fill=NA, by.column=F, align = "center")
@@ -94,7 +94,9 @@ for (j in 1:length(window_size)){
 
     # calculate net displacement
     nd$nd <- sqrt(nd$x_net+nd$y_net)
-    nd <- nd[, c(1,2,8)] 
+    #nd <- nd[, c(1,2,8)] 
+    #browser()
+    nd <- nd[, c("uniqueID","time","nd")] 
 
     # shift necessary for correct association of net to gross displacement (because gd is shifted)
     if (window_size[j] %% 2 == 0) nd$time <- nd$time-granulosity[i]
