@@ -14,8 +14,7 @@ Imports:
     ggplot2,
     dplyr,
     tcltk,
-    gridExtra,
-    data.table
+    gridExtra
 VignetteBuilder: knitr
 Suggests:
     knitr
