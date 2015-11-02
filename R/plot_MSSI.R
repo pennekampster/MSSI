@@ -14,40 +14,37 @@
 #' @import ggplot2 gridExtra 
 #' @export
 
-plot_MSSI <- function(raw_traj,data,uniqueID="traj",time="frame",granulosity_choosen=1,random=T,N_traj=10,trajectory_select=select_traj){
-  
-  #rename x and y variable to make function cap-insensitive
+plot_MSSI <- function (raw_traj, data, uniqueID = "traj", time = "frame", 
+                       granulosity_choosen = 1, random = T, N_traj = 10, trajectory_select = select_traj) 
+{
   colnames(raw_traj)[tolower(colnames(raw_traj)) == "x"] <- "x"
   colnames(raw_traj)[tolower(colnames(raw_traj)) == "y"] <- "y"
-  
-  # rename columns in data according to specification
   colnames(data)[colnames(data) == paste(uniqueID)] <- "uniqueID"
   colnames(data)[colnames(data) == paste(time)] <- "time"
-  
   colnames(raw_traj)[colnames(raw_traj) == paste(uniqueID)] <- "uniqueID"
   colnames(raw_traj)[colnames(raw_traj) == paste(time)] <- "time"
-  
-  if (random){select_traj <- sample(data$uniqueID,N_traj,replace=F)}
-  
-  for (k in 1:length(select_traj)){
-    traj <-  subset(data, uniqueID == select_traj[k])
+  if (random) {
+    select_traj <- sample(data$uniqueID, N_traj, replace = F)
+  }
+  for (k in 1:length(select_traj)) {
+      traj <- subset(data, uniqueID == select_traj[k])
+      traj_MSSI <- ggplot(traj, aes(time, window_size)) + 
+                 geom_tile(data = subset(traj, granulosity == granulosity_choosen), aes(width = as.numeric(granulosity), height = as.numeric(2), fill = SI)) + 
+      scale_fill_gradientn(colours = c("red", "cyan", "black"), guide = "colourbar", limits = c(0, 1)) + 
+      ylab("Window size") + 
+      xlab("Time") + 
+      theme(legend.position = "bottom")
     
-    traj_MSSI <- ggplot(traj, aes(time, window_size)) +
-      geom_tile(data=subset(traj, granulosity == granulosity_choosen), aes(width=as.numeric(granulosity),height=as.numeric(2),fill = SI)) + 
-      scale_fill_gradientn(colours = c("red","cyan","black"), guide = "colourbar", limits=c(0,1))+
-      ylab("Window size")+
-      xlab("Time")+
-      theme(legend.position="bottom")
-    
-     traj_plot <-  subset(raw_traj, uniqueID == select_traj[k])
-     gg_traj <- ggplot(traj_plot, aes(x,y,label=time))+ 
-      geom_text(size=3)
-    
-     print(grid.arrange(gg_traj,traj_MSSI, main=paste0("Multiscale straightness index for trajectory: ", select_traj[k])))
+      traj_plot <- subset(raw_traj, uniqueID == select_traj[k])
+      
+      gg_traj <- ggplot(traj_plot, aes(x, y, label = time)) + 
+      geom_text(size = 3) +
+      ggtitle(paste0("Multiscale straightness index for trajectory: ", select_traj[k]))      
+      
+      grid.arrange(gg_traj, traj_MSSI, ncol=1, nrow=2)
     
   }
 }
-
 
 
 
